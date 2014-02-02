@@ -12,6 +12,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -220,6 +221,30 @@ namespace Office365
             return s;
         }
 
+        public List<RoleDefinition> RoleDefinitions()
+        {
+            List<RoleDefinition> roleDefinitions = new List<RoleDefinition>();
+            string s = Request(Host + Site + "_api/web/roledefinitions", null, false, null, false, null, null, null, null, null, null);
+            XmlReader xmlReader = XmlReader.Create(new MemoryStream(Encoding.UTF8.GetBytes(s)));
+            while (xmlReader.ReadToFollowing("m:properties"))
+            {
+                xmlReader.ReadToDescendant("d:High");
+                RoleDefinition roleDefinition = new RoleDefinition();
+                roleDefinition.BasePermissions = new BasePermissions();
+                roleDefinition.BasePermissions.High = xmlReader.ReadElementContentAsLong();
+                roleDefinition.BasePermissions.Low = xmlReader.ReadElementContentAsLong();
+                xmlReader.ReadToFollowing("d:Description");
+                roleDefinition.Description = xmlReader.ReadElementContentAsString();
+                roleDefinition.Hidden = xmlReader.ReadElementContentAsBoolean();
+                roleDefinition.Id = xmlReader.ReadElementContentAsInt();
+                roleDefinition.Name = xmlReader.ReadElementContentAsString();
+                roleDefinition.Order = xmlReader.ReadElementContentAsInt();
+                roleDefinition.RoleTypeKind = xmlReader.ReadElementContentAsInt();
+                roleDefinitions.Add(roleDefinition);
+            }
+            return roleDefinitions;
+        }
+
         /// <summary>
         /// http://macfoo.wordpress.com/
         /// http://allthatjs.com/2012/03/28/remote-authentication-in-sharepoint-online/
@@ -283,6 +308,27 @@ namespace Office365
             xmlReader.ReadToFollowing("wsse:BinarySecurityToken");
             Cookies = new CookieContainer();
             Request(Host + "/_forms/default.aspx?wa=wsignin1.0", null, false, null, false, "POST", xmlReader.ReadElementContentAsString(), null, null, null, null);
+        }
+
+        public List<User> SiteUsers()
+        {
+            List<User> users = new List<User>();
+            string s = Request(Host + Site + "_api/web/siteusers", null, false, null, false, "GET", null, null, null, null, null);
+            XmlReader xmlReader = XmlReader.Create(new MemoryStream(Encoding.UTF8.GetBytes(s)));
+            while (xmlReader.ReadToFollowing("m:properties"))
+            {
+                xmlReader.ReadToDescendant("d:Id");
+                User user = new User();
+                user.Id = xmlReader.ReadElementContentAsInt();
+                user.IsHiddenInUi = xmlReader.ReadElementContentAsBoolean();
+                user.LoginName = xmlReader.ReadElementContentAsString();
+                user.Title = xmlReader.ReadElementContentAsString();
+                user.PrincipalType = xmlReader.ReadElementContentAsInt();
+                user.Email = xmlReader.ReadElementContentAsString();
+                user.IsSiteAdmin = xmlReader.ReadElementContentAsBoolean();
+                users.Add(user);
+            }
+            return users;
         }
 
         public string UploadFile(string localName, string serverRelativeUrl)
