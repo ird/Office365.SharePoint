@@ -170,7 +170,7 @@ namespace Office365
             }
             if (xHttpMethod != null && xHttpMethod != "")
             {
-                httpWebRequest.Headers.Add("X-HTTP-Method", "DELETE");
+                httpWebRequest.Headers.Add("X-HTTP-Method", xHttpMethod);
             }
             if (xRequestDigest)
             {
